@@ -55,7 +55,7 @@ dependencies:
     path: packages/plain_notification_token
   speech_to_text: ^7.0.0
   sherpa_onnx: ^1.11.0
-  record: ^5.2.0
+  record: ^6.2.0
   fl_lib:
     path: packages/fl_lib
 

@@ -873,4 +873,33 @@ class AppLocalizationsKo extends AppLocalizations {
   @override
   String get podmanDockerEmulationDetected =>
       'Podman Docker 에뮬레이션이 감지되었습니다. 설정에서 Podman으로 전환해 주세요.';
+
+  @override
+  String get asrModelDownload => 'Download voice model';
+
+  @override
+  String get asrModelDownloading => 'Downloading model...';
+
+  @override
+  String get asrModelReady => 'Voice model ready';
+
+  @override
+  String get asrSystemUnavailable => 'System voice engine unavailable';
+
+  @override
+  String get asrSelectModel => 'Select voice model';
+
+  @override
+  String get asrModelDelete => 'Delete model';
+
+  @override
+  String asrModelSize(Object size) {
+    return 'Size: $size';
+  }
+
+  @override
+  String get asrDownloadComplete => 'Download complete';
+
+  @override
+  String get asrOrInstallEngine => 'Or install a system voice engine';
 }

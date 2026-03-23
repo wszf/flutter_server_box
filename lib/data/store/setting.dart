@@ -279,4 +279,7 @@ class SettingStore extends HiveStore {
       return val?.map((e) => e.name).toList() ?? [];
     },
   );
+
+  /// 已下载的 ASR 模型 ID
+  late final asrModelId = propertyDefault('asrModelId', '');
 }

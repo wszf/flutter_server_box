@@ -24,7 +24,8 @@ import 'package:server_box/data/res/store.dart';
 import 'package:server_box/data/res/terminal.dart';
 import 'package:server_box/data/ssh/session_manager.dart';
 import 'package:server_box/view/page/storage/sftp.dart';
-import 'package:speech_to_text/speech_to_text.dart';
+import 'package:server_box/core/utils/asr.dart';
+import 'package:server_box/core/utils/asr_model.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
 import 'package:xterm/core.dart';
 import 'package:xterm/ui.dart' hide TerminalThemes;
@@ -89,8 +90,7 @@ class SSHPageState extends ConsumerState<SSHPage>
   bool _showInputBar = false;
   /// 用户主动开启输入栏（用于备用屏幕退出后恢复）
   bool _inputBarEnabledByUser = false;
-  final _speechToText = SpeechToText();
-  bool _speechEnabled = false;
+  final _asrManager = AsrManager();
   bool _isListening = false;
   bool _voiceCancelling = false;
   /// 记录上一次已同步到终端的文本
@@ -122,7 +122,7 @@ class SSHPageState extends ConsumerState<SSHPage>
     _inputBarDebounce?.cancel();
     _inputBarController.dispose();
     _terminal.removeListener(_onTerminalStateChanged);
-    _speechToText.cancel();
+    _asrManager.dispose();
     _discontinuityTimer?.cancel();
 
     HardwareKeyboard.instance.removeHandler(_handleKeyEvent);
@@ -517,51 +517,45 @@ class SSHPageState extends ConsumerState<SSHPage>
 
   /// 开始语音识别（按住触发）
   Future<void> _startVoiceInput() async {
-    if (!_speechEnabled) {
-      _speechEnabled = await _speechToText.initialize(
-        onError: (error) {
-          if (!mounted) return;
-          setState(() => _isListening = false);
-          if (error.permanent) {
-            context.showSnackBar('${l10n.voiceInput}: ${error.errorMsg}');
-          }
-        },
-        onStatus: (status) {
-          if (status == 'done' || status == 'notListening') {
-            if (mounted) setState(() => _isListening = false);
-          }
-        },
-      );
-      if (!_speechEnabled) {
-        if (mounted) {
-          context.showSnackBar('${l10n.voiceInput}: ${libL10n.fail}');
-        }
-        return;
-      }
-    }
-
     _voiceCancelling = false;
 
     // 获取系统语言作为识别语言
     final locale = Localizations.localeOf(context);
     final localeId = '${locale.languageCode}_${locale.countryCode ?? locale.languageCode.toUpperCase()}';
 
-    await _speechToText.listen(
-      onResult: (result) {
+    final started = await _asrManager.startListening(
+      onResult: (text) {
         if (!mounted) return;
-        _inputBarController.text = result.recognizedWords;
+        _inputBarController.text = text;
         _inputBarController.selection = TextSelection.fromPosition(
           TextPosition(offset: _inputBarController.text.length),
         );
       },
+      onError: (error) {
+        if (!mounted) return;
+        setState(() => _isListening = false);
+        context.showSnackBar('${l10n.voiceInput}: $error');
+      },
+      onStatus: (status) {
+        if (status == 'done' || status == 'notListening') {
+          if (mounted) setState(() => _isListening = false);
+        }
+      },
       localeId: localeId,
     );
+
+    if (!started) {
+      // 需要下载模型
+      if (mounted) await _showAsrModelDialog();
+      return;
+    }
+
     if (mounted) setState(() => _isListening = true);
   }
 
   /// 结束语音识别（松开触发）
   Future<void> _endVoiceInput() async {
-    await _speechToText.stop();
+    await _asrManager.stopListening();
     if (!mounted) return;
 
     final cancelled = _voiceCancelling;
@@ -577,6 +571,82 @@ class SSHPageState extends ConsumerState<SSHPage>
       context.showSnackBar(l10n.voiceInputCancelled);
     }
     // 不取消时，识别结果保留在输入框，等用户确认后发送
+  }
+
+  /// 显示 ASR 模型下载对话框
+  Future<void> _showAsrModelDialog() async {
+    final progressNotifier = ValueNotifier<double?>(null);
+
+    await context.showRoundDialog(
+      title: l10n.asrSelectModel,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(l10n.asrSystemUnavailable),
+          const SizedBox(height: 16),
+          ...AsrModels.all.map((model) => ListTile(
+                title: Text(model.name),
+                subtitle: Text(l10n.asrModelSize(model.size)),
+                trailing: const Icon(Icons.download),
+                onTap: () async {
+                  context.pop();
+                  await _downloadAsrModel(model, progressNotifier);
+                },
+              )),
+          const SizedBox(height: 8),
+          Text(
+            l10n.asrOrInstallEngine,
+            style: const TextStyle(fontSize: 12, color: Colors.grey),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// 下载 ASR 模型
+  Future<void> _downloadAsrModel(
+    AsrModelInfo model,
+    ValueNotifier<double?> progressNotifier,
+  ) async {
+    // 显示下载进度对话框
+    context.showRoundDialog(
+      title: l10n.asrModelDownloading,
+      child: ValueListenableBuilder<double?>(
+        valueListenable: progressNotifier,
+        builder: (_, progress, __) {
+          return Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                LinearProgressIndicator(value: progress),
+                const SizedBox(height: 8),
+                Text('${((progress ?? 0) * 100).toStringAsFixed(1)}%'),
+              ],
+            ),
+          );
+        },
+      ),
+    );
+
+    try {
+      await AsrModelManager.instance.downloadModel(
+        model,
+        onProgress: (p) => progressNotifier.value = p,
+      );
+      // 保存模型选择
+      Stores.setting.asrModelId.put(model.id);
+
+      if (mounted) {
+        context.pop(); // 关闭进度对话框
+        context.showSnackBar(l10n.asrDownloadComplete);
+      }
+    } catch (e) {
+      if (mounted) {
+        context.pop();
+        context.showSnackBar('${l10n.voiceInput}: $e');
+      }
+    }
   }
 
   @override

@@ -1685,6 +1685,60 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Podman Docker emulation detected. Please switch to Podman in settings.'**
   String get podmanDockerEmulationDetected;
+
+  /// No description provided for @asrModelDownload.
+  ///
+  /// In en, this message translates to:
+  /// **'Download voice model'**
+  String get asrModelDownload;
+
+  /// No description provided for @asrModelDownloading.
+  ///
+  /// In en, this message translates to:
+  /// **'Downloading model...'**
+  String get asrModelDownloading;
+
+  /// No description provided for @asrModelReady.
+  ///
+  /// In en, this message translates to:
+  /// **'Voice model ready'**
+  String get asrModelReady;
+
+  /// No description provided for @asrSystemUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'System voice engine unavailable'**
+  String get asrSystemUnavailable;
+
+  /// No description provided for @asrSelectModel.
+  ///
+  /// In en, this message translates to:
+  /// **'Select voice model'**
+  String get asrSelectModel;
+
+  /// No description provided for @asrModelDelete.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete model'**
+  String get asrModelDelete;
+
+  /// No description provided for @asrModelSize.
+  ///
+  /// In en, this message translates to:
+  /// **'Size: {size}'**
+  String asrModelSize(Object size);
+
+  /// No description provided for @asrDownloadComplete.
+  ///
+  /// In en, this message translates to:
+  /// **'Download complete'**
+  String get asrDownloadComplete;
+
+  /// No description provided for @asrOrInstallEngine.
+  ///
+  /// In en, this message translates to:
+  /// **'Or install a system voice engine'**
+  String get asrOrInstallEngine;
 }
 
 class _AppLocalizationsDelegate

@@ -35,12 +35,13 @@ jobs:
 
       - name: Change package name
         run: |
-          # 修改 applicationId 和 namespace
-          sed -i 's/tech\.lolli\.toolbox/tech.lolli.toolboxdd/g' android/app/build.gradle
-          # 修改 AndroidManifest.xml 中的包名引用
-          sed -i 's/tech\.lolli\.toolbox/tech.lolli.toolboxdd/g' android/app/src/main/AndroidManifest.xml
-          # 修改 Kotlin 方法通道名
-          sed -i 's/tech\.lolli\.toolbox/tech.lolli.toolboxdd/g' android/app/src/main/kotlin/tech/lolli/toolbox/MainActivity.kt
+          KOTLIN_SRC="android/app/src/main/kotlin"
+          # 替换所有源文件中的包名
+          find android/app -name "*.gradle" -o -name "*.xml" -o -name "*.kt" | xargs sed -i 's/tech\.lolli\.toolbox/tech.lolli.toolboxdd/g'
+          # 重命名 Kotlin 源文件目录以匹配新包名
+          mkdir -p "$KOTLIN_SRC/tech/lolli/toolboxdd"
+          cp -r "$KOTLIN_SRC/tech/lolli/toolbox/"* "$KOTLIN_SRC/tech/lolli/toolboxdd/"
+          rm -rf "$KOTLIN_SRC/tech/lolli/toolbox"
 
       - name: Setup signing
         run: |

@@ -173,6 +173,11 @@ class SSHPageState extends ConsumerState<SSHPage>
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
+
+    // 保存旋转前的输入内容
+    final savedText = _inputBarController.text;
+    final savedSelection = _inputBarController.selection;
+
     _isDark = switch (Stores.setting.termTheme.fetch()) {
       1 => false,
       2 => true,
@@ -189,6 +194,16 @@ class SSHPageState extends ConsumerState<SSHPage>
         _virtKeysHeight = 37;
       } else {
         _virtKeysHeight = 37.0 * _virtKeysList.length;
+      }
+    }
+
+    // 恢复旋转前的输入内容
+    if (savedText.isNotEmpty && _inputBarController.text != savedText) {
+      _inputBarController.text = savedText;
+      try {
+        _inputBarController.selection = savedSelection;
+      } catch (_) {
+        _inputBarController.selection = TextSelection.collapsed(offset: savedText.length);
       }
     }
   }

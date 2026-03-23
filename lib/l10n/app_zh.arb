@@ -259,5 +259,17 @@
   "writeScriptFailTip": "写入脚本失败，可能是没有权限/目录不存在等",
   "writeScriptTip": "在连接服务器后，会向 `~/.config/server_box` \n | `/tmp/server_box` 写入脚本来监测系统状态，你可以审查脚本内容。",
   "menuGitHubRepository": "GitHub 仓库",
-  "podmanDockerEmulationDetected": "检测到 Podman Docker 仿真。请在设置中切换到 Podman。"
+  "podmanDockerEmulationDetected": "检测到 Podman Docker 仿真。请在设置中切换到 Podman。",
+  "asrModelDownload": "下载语音模型",
+  "asrModelDownloading": "正在下载模型...",
+  "asrModelReady": "语音模型已就绪",
+  "asrSystemUnavailable": "系统语音引擎不可用",
+  "asrSelectModel": "选择语音模型",
+  "asrModelDelete": "删除模型",
+  "asrModelSize": "大小: {size}",
+  "asrDownloadComplete": "下载完成",
+  "asrOrInstallEngine": "或安装系统语音引擎",
+  "engine": "引擎",
+  "local": "本地",
+  "current": "当前"
 }

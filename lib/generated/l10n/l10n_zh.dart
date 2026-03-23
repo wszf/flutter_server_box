@@ -853,6 +853,44 @@ class AppLocalizationsZh extends AppLocalizations {
   @override
   String get podmanDockerEmulationDetected =>
       '检测到 Podman Docker 仿真。请在设置中切换到 Podman。';
+
+  @override
+  String get asrModelDownload => '下载语音模型';
+
+  @override
+  String get asrModelDownloading => '正在下载模型...';
+
+  @override
+  String get asrModelReady => '语音模型已就绪';
+
+  @override
+  String get asrSystemUnavailable => '系统语音引擎不可用';
+
+  @override
+  String get asrSelectModel => '选择语音模型';
+
+  @override
+  String get asrModelDelete => '删除模型';
+
+  @override
+  String asrModelSize(Object size) {
+    return '大小: $size';
+  }
+
+  @override
+  String get asrDownloadComplete => '下载完成';
+
+  @override
+  String get asrOrInstallEngine => '或安装系统语音引擎';
+
+  @override
+  String get engine => '引擎';
+
+  @override
+  String get local => '本地';
+
+  @override
+  String get current => '当前';
 }
 
 /// The translations for Chinese, as used in Taiwan (`zh_TW`).

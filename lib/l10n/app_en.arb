@@ -262,5 +262,17 @@
   "writeScriptFailTip": "Writing to the script failed, possibly due to lack of permissions or the directory does not exist.",
   "writeScriptTip": "After connecting to the server, a script will be written to `~/.config/server_box` \n | `/tmp/server_box` to monitor the system status. You can review the script content.",
   "menuGitHubRepository": "GitHub Repository",
-  "podmanDockerEmulationDetected": "Podman Docker emulation detected. Please switch to Podman in settings."
+  "podmanDockerEmulationDetected": "Podman Docker emulation detected. Please switch to Podman in settings.",
+  "asrModelDownload": "Download voice model",
+  "asrModelDownloading": "Downloading model...",
+  "asrModelReady": "Voice model ready",
+  "asrSystemUnavailable": "System voice engine unavailable",
+  "asrSelectModel": "Select voice model",
+  "asrModelDelete": "Delete model",
+  "asrModelSize": "Size: {size}",
+  "asrDownloadComplete": "Download complete",
+  "asrOrInstallEngine": "Or install a system voice engine",
+  "engine": "Engine",
+  "local": "Local",
+  "current": "Current"
 }

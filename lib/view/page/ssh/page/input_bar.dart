@@ -11,30 +11,37 @@ extension _InputBar on SSHPageState {
     if (!_showInputBar) return const SizedBox();
     return Container(
       color: _terminalTheme.background,
-      height: _inputBarHeight,
+      constraints: const BoxConstraints(minHeight: _inputBarHeight, maxHeight: 120),
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.end,
         children: [
           Expanded(
             child: Input(
               controller: _inputBarController,
               minLines: 1,
-              maxLines: 1,
+              maxLines: 4,
               hint: l10n.termInputBarHint,
-              action: TextInputAction.send,
+              action: TextInputAction.newline,
               autoFocus: true,
               onSubmitted: (_) => _onInputBarSubmit(),
             ),
           ),
           const SizedBox(width: 4),
-          _buildVoiceBtn(),
+          Padding(
+            padding: const EdgeInsets.only(bottom: 4),
+            child: _buildVoiceBtn(),
+          ),
           const SizedBox(width: 4),
-          Btn.icon(
-            onTap: _onInputBarSubmit,
-            icon: Icon(
-              Icons.subdirectory_arrow_left,
-              size: 18,
-              color: _isDark ? Colors.white : Colors.black,
+          Padding(
+            padding: const EdgeInsets.only(bottom: 4),
+            child: Btn.icon(
+              onTap: _onInputBarSubmit,
+              icon: Icon(
+                Icons.subdirectory_arrow_left,
+                size: 18,
+                color: _isDark ? Colors.white : Colors.black,
+              ),
             ),
           ),
         ],
@@ -43,9 +50,14 @@ extension _InputBar on SSHPageState {
   }
 
   /// 语音按钮 - 按住说话，松开发送，上滑取消
+  /// 蓝色 = 系统引擎，绿色 = 本地模型
   Widget _buildVoiceBtn() {
     final isListening = _isListening;
     final isCancelling = _voiceCancelling;
+    final isSherpa = _asrManager.activeEngine == AsrEngine.sherpaOnnx;
+    // 系统引擎蓝色，本地模型绿色
+    final engineColor = isSherpa ? Colors.green : Colors.blue;
+
     return GestureDetector(
       onLongPressStart: (_) => _startVoiceInput(),
       onLongPressMoveUpdate: (details) {
@@ -62,7 +74,7 @@ extension _InputBar on SSHPageState {
             ? BoxDecoration(
                 color: isCancelling
                     ? Colors.red.withValues(alpha: 0.2)
-                    : Colors.blue.withValues(alpha: 0.2),
+                    : engineColor.withValues(alpha: 0.2),
                 shape: BoxShape.circle,
               )
             : null,
@@ -72,19 +84,36 @@ extension _InputBar on SSHPageState {
               : Icons.mic_none,
           size: 18,
           color: isListening
-              ? (isCancelling ? Colors.red : Colors.blue)
+              ? (isCancelling ? Colors.red : engineColor)
               : (_isDark ? Colors.white : Colors.black),
         ),
       ),
     );
   }
 
-  /// 提交输入：发送回车并清空输入框
+  /// 提交输入：清除已同步内容，逐行发送
   void _onInputBarSubmit() {
-    // 先刷新待发送的防抖内容
     _inputBarDebounce?.cancel();
-    _syncInputBarToTerminal();
-    _terminal.keyInput(TerminalKey.enter);
+    final text = _inputBarController.text;
+    if (text.isEmpty) {
+      _terminal.keyInput(TerminalKey.enter);
+      return;
+    }
+
+    // 先删掉已实时同步到终端的内容（含续行符）
+    for (var i = 0; i < _prevInputBarText.length; i++) {
+      _terminal.keyInput(TerminalKey.backspace);
+    }
+
+    // 逐行发送
+    final lines = text.split('\n');
+    for (var i = 0; i < lines.length; i++) {
+      if (lines[i].isNotEmpty) {
+        _terminal.textInput(lines[i]);
+      }
+      _terminal.keyInput(TerminalKey.enter);
+    }
+
     _prevInputBarText = '';
     _inputBarController.clear();
   }

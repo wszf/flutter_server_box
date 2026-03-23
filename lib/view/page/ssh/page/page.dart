@@ -91,8 +91,10 @@ class SSHPageState extends ConsumerState<SSHPage>
   bool _speechEnabled = false;
   bool _isListening = false;
   bool _voiceCancelling = false;
-  /// 记录上一次输入框的文本，用于计算增量差异
+  /// 记录上一次已同步到终端的文本
   String _prevInputBarText = '';
+  /// 防抖定时器，批量处理快速输入/删除
+  Timer? _inputBarDebounce;
 
   SSHClient? _client;
   SSHSession? _session;
@@ -115,6 +117,7 @@ class SSHPageState extends ConsumerState<SSHPage>
     _virtKeyLongPressTimer?.cancel();
     _terminalController.dispose();
     _inputBarController.removeListener(_onInputBarChanged);
+    _inputBarDebounce?.cancel();
     _inputBarController.dispose();
     _speechToText.cancel();
     _discontinuityTimer?.cancel();
@@ -442,27 +445,33 @@ class SSHPageState extends ConsumerState<SSHPage>
     }
   }
 
-  /// 输入框内容变化时，计算增量差异并实时同步到终端
+  /// 输入框内容变化时，使用防抖批量同步到终端
   void _onInputBarChanged() {
+    // 语音识别更新的文本不实时同步
+    if (_isListening) return;
+
+    _inputBarDebounce?.cancel();
+    _inputBarDebounce = Timer(const Duration(milliseconds: 50), _syncInputBarToTerminal);
+  }
+
+  /// 将输入框内容与上次同步状态对比，批量发送差异到终端
+  void _syncInputBarToTerminal() {
     final newText = _inputBarController.text;
     final oldText = _prevInputBarText;
+    if (newText == oldText) return;
     _prevInputBarText = newText;
-
-    // 如果是语音识别更新的文本，不实时同步（等用户手动发送）
-    if (_isListening) return;
 
     if (newText.length > oldText.length && newText.startsWith(oldText)) {
       // 追加了新字符
-      final added = newText.substring(oldText.length);
-      _terminal.textInput(added);
+      _terminal.textInput(newText.substring(oldText.length));
     } else if (newText.length < oldText.length && oldText.startsWith(newText)) {
-      // 删除了字符（退格）
+      // 删除了字符（退格），批量发送
       final deletedCount = oldText.length - newText.length;
       for (var i = 0; i < deletedCount; i++) {
         _terminal.keyInput(TerminalKey.backspace);
       }
-    } else if (newText != oldText) {
-      // 文本发生了非连续变化（如粘贴替换），先删旧再输新
+    } else {
+      // 非连续变化（粘贴替换等），先删旧再输新
       for (var i = 0; i < oldText.length; i++) {
         _terminal.keyInput(TerminalKey.backspace);
       }

@@ -81,10 +81,9 @@ extension _InputBar on SSHPageState {
 
   /// 提交输入：发送回车并清空输入框
   void _onInputBarSubmit() {
-    // 语音识别的文本还没同步到终端，先发送
-    if (_prevInputBarText.isEmpty && _inputBarController.text.isNotEmpty) {
-      _terminal.textInput(_inputBarController.text);
-    }
+    // 先刷新待发送的防抖内容
+    _inputBarDebounce?.cancel();
+    _syncInputBarToTerminal();
     _terminal.keyInput(TerminalKey.enter);
     _prevInputBarText = '';
     _inputBarController.clear();

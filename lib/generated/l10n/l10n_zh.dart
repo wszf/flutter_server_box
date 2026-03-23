@@ -799,6 +799,18 @@ class AppLocalizationsZh extends AppLocalizations {
   String get virtKeyHelpSFTP => '在 SFTP 中打开当前路径。';
 
   @override
+  String get termInputBar => '输入栏';
+
+  @override
+  String get termInputBarHint => '输入文本发送到终端';
+
+  @override
+  String get voiceInput => '语音输入';
+
+  @override
+  String get virtKeyHelpInputBar => '显示/隐藏文本输入栏，支持中文输入和语音输入。';
+
+  @override
   String get waitConnection => '请等待连接建立';
 
   @override

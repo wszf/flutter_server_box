@@ -24,12 +24,14 @@ import 'package:server_box/data/res/store.dart';
 import 'package:server_box/data/res/terminal.dart';
 import 'package:server_box/data/ssh/session_manager.dart';
 import 'package:server_box/view/page/storage/sftp.dart';
+import 'package:speech_to_text/speech_to_text.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
 import 'package:xterm/core.dart';
 import 'package:xterm/ui.dart' hide TerminalThemes;
 
 part 'ask_ai.dart';
 part 'init.dart';
+part 'input_bar.dart';
 part 'keyboard.dart';
 part 'virt_key.dart';
 
@@ -81,6 +83,14 @@ class SSHPageState extends ConsumerState<SSHPage>
 
   bool _isDark = false;
   Timer? _virtKeyLongPressTimer;
+
+  // 输入栏相关字段
+  final _inputBarController = TextEditingController();
+  bool _showInputBar = false;
+  final _speechToText = SpeechToText();
+  bool _speechEnabled = false;
+  bool _isListening = false;
+
   SSHClient? _client;
   SSHSession? _session;
   Timer? _discontinuityTimer;
@@ -101,6 +111,8 @@ class SSHPageState extends ConsumerState<SSHPage>
   void dispose() {
     _virtKeyLongPressTimer?.cancel();
     _terminalController.dispose();
+    _inputBarController.dispose();
+    _speechToText.cancel();
     _discontinuityTimer?.cancel();
 
     HardwareKeyboard.instance.removeHandler(_handleKeyEvent);
@@ -262,8 +274,9 @@ class SSHPageState extends ConsumerState<SSHPage>
       ),
     );
 
+    final inputBarH = _showInputBar ? _InputBar._inputBarHeight : 0.0;
     return SizedBox(
-      height: _media.size.height - _virtKeysHeight - _media.padding.bottom - _media.padding.top,
+      height: _media.size.height - _virtKeysHeight - inputBarH - _media.padding.bottom - _media.padding.top,
       child: Stack(children: children),
     );
   }
@@ -277,16 +290,24 @@ class SSHPageState extends ConsumerState<SSHPage>
         curve: Curves.fastOutSlowIn,
         child: Container(
           color: _terminalTheme.background,
-          height: _virtKeysHeight,
           child: Consumer(
             builder: (context, ref, child) {
               final virtKeyState = ref.watch(virtKeyboardProvider);
               final virtKeyNotifier = ref.read(virtKeyboardProvider.notifier);
-              
-              // Set the terminal input handler
+
+              // 设置终端输入处理器
               _terminal.inputHandler = virtKeyNotifier;
-              
-              return _buildVirtualKey(virtKeyState, virtKeyNotifier);
+
+              return Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  _buildInputBar(),
+                  SizedBox(
+                    height: _virtKeysHeight,
+                    child: _buildVirtualKey(virtKeyState, virtKeyNotifier),
+                  ),
+                ],
+              );
             },
           ),
         ),
@@ -402,6 +423,63 @@ class SSHPageState extends ConsumerState<SSHPage>
 
   @override
   bool get wantKeepAlive => true;
+
+  /// 切换输入栏显示
+  void _toggleInputBar() {
+    setState(() {
+      _showInputBar = !_showInputBar;
+    });
+  }
+
+  /// 开始语音识别
+  Future<void> _startVoiceInput() async {
+    if (!_speechEnabled) {
+      _speechEnabled = await _speechToText.initialize(
+        onError: (error) {
+          if (!mounted) return;
+          setState(() => _isListening = false);
+          if (error.permanent) {
+            context.showSnackBar('${l10n.voiceInput}: ${error.errorMsg}');
+          }
+        },
+        onStatus: (status) {
+          // 当识别结束时自动更新状态
+          if (status == 'done' || status == 'notListening') {
+            if (mounted) setState(() => _isListening = false);
+          }
+        },
+      );
+      if (!_speechEnabled) {
+        if (mounted) {
+          context.showSnackBar('${l10n.voiceInput}: ${libL10n.fail}');
+        }
+        return;
+      }
+    }
+
+    // 获取系统语言作为识别语言
+    final locale = Localizations.localeOf(context);
+    final localeId = '${locale.languageCode}_${locale.countryCode ?? locale.languageCode.toUpperCase()}';
+
+    await _speechToText.listen(
+      onResult: (result) {
+        if (!mounted) return;
+        _inputBarController.text = result.recognizedWords;
+        // 将光标移到末尾
+        _inputBarController.selection = TextSelection.fromPosition(
+          TextPosition(offset: _inputBarController.text.length),
+        );
+      },
+      localeId: localeId,
+    );
+    if (mounted) setState(() => _isListening = true);
+  }
+
+  /// 停止语音识别
+  Future<void> _stopVoiceInput() async {
+    await _speechToText.stop();
+    if (mounted) setState(() => _isListening = false);
+  }
 
   @override
   FutureOr<void> afterFirstLayout(BuildContext context) async {

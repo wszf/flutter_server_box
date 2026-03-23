@@ -40,6 +40,9 @@ extension _VirtKey on SSHPageState {
       case VirtualKeyFunc.toggleIME:
         _termKey.currentState?.toggleFocus();
         break;
+      case VirtualKeyFunc.toggleInputBar:
+        _toggleInputBar();
+        break;
       case VirtualKeyFunc.backspace:
         _terminal.keyInput(TerminalKey.backspace);
         break;

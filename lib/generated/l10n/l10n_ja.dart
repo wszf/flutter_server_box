@@ -818,6 +818,19 @@ class AppLocalizationsJa extends AppLocalizations {
   String get virtKeyHelpSFTP => '現在のパスでSFTPを開く。';
 
   @override
+  String get termInputBar => 'Input bar';
+
+  @override
+  String get termInputBarHint => 'Type text to send to terminal';
+
+  @override
+  String get voiceInput => 'Voice input';
+
+  @override
+  String get virtKeyHelpInputBar =>
+      'Show/hide text input bar for CJK input and voice input.';
+
+  @override
   String get waitConnection => '接続の確立を待ってください';
 
   @override

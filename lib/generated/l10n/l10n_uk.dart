@@ -852,6 +852,19 @@ class AppLocalizationsUk extends AppLocalizations {
   String get virtKeyHelpSFTP => 'Відкрити поточний каталог у SFTP.';
 
   @override
+  String get termInputBar => 'Input bar';
+
+  @override
+  String get termInputBarHint => 'Type text to send to terminal';
+
+  @override
+  String get voiceInput => 'Voice input';
+
+  @override
+  String get virtKeyHelpInputBar =>
+      'Show/hide text input bar for CJK input and voice input.';
+
+  @override
   String get waitConnection =>
       'Будь ласка, зачекайте, доки з\'єднання буде встановлено.';
 

@@ -817,6 +817,19 @@ class AppLocalizationsKo extends AppLocalizations {
   String get virtKeyHelpSFTP => '현재 디렉토리를 SFTP로 열기.';
 
   @override
+  String get termInputBar => 'Input bar';
+
+  @override
+  String get termInputBarHint => 'Type text to send to terminal';
+
+  @override
+  String get voiceInput => 'Voice input';
+
+  @override
+  String get virtKeyHelpInputBar =>
+      'Show/hide text input bar for CJK input and voice input.';
+
+  @override
   String get waitConnection => '연결이 설정될 때까지 기다려 주세요.';
 
   @override

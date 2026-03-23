@@ -4,7 +4,7 @@ import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/data/res/store.dart';
 import 'package:xterm/core.dart';
 
-enum VirtualKeyFunc { toggleIME, backspace, clipboard, snippet, file }
+enum VirtualKeyFunc { toggleIME, backspace, clipboard, snippet, file, toggleInputBar }
 
 enum VirtKey {
   esc,
@@ -40,6 +40,7 @@ enum VirtKey {
   chevronRight,
   colon,
   semicolon,
+  inputBar,
   f1,
   f2,
   f3,
@@ -106,6 +107,7 @@ extension VirtKeyX on VirtKey {
     VirtKey.right,
     VirtKey.clipboard,
     VirtKey.ime,
+    VirtKey.inputBar,
     VirtKey.shift,
   ];
 
@@ -149,6 +151,7 @@ extension VirtKeyX on VirtKey {
     VirtKey.snippet => Icons.code,
     VirtKey.clipboard => Icons.paste,
     VirtKey.ime => Icons.keyboard,
+    VirtKey.inputBar => Icons.text_fields,
     _ => null,
   };
 
@@ -160,6 +163,7 @@ extension VirtKeyX on VirtKey {
     VirtKey.snippet => VirtualKeyFunc.snippet,
     VirtKey.clipboard => VirtualKeyFunc.clipboard,
     VirtKey.ime => VirtualKeyFunc.toggleIME,
+    VirtKey.inputBar => VirtualKeyFunc.toggleInputBar,
     _ => null,
   };
 
@@ -177,6 +181,7 @@ extension VirtKeyX on VirtKey {
     VirtKey.sftp => l10n.virtKeyHelpSFTP,
     VirtKey.clipboard => l10n.virtKeyHelpClipboard,
     VirtKey.ime => l10n.virtKeyHelpIME,
+    VirtKey.inputBar => l10n.virtKeyHelpInputBar,
     _ => null,
   };
 

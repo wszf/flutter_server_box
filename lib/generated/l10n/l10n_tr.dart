@@ -848,6 +848,19 @@ class AppLocalizationsTr extends AppLocalizations {
   String get virtKeyHelpSFTP => 'Mevcut dizini SFTP\'de aç.';
 
   @override
+  String get termInputBar => 'Input bar';
+
+  @override
+  String get termInputBarHint => 'Type text to send to terminal';
+
+  @override
+  String get voiceInput => 'Voice input';
+
+  @override
+  String get virtKeyHelpInputBar =>
+      'Show/hide text input bar for CJK input and voice input.';
+
+  @override
   String get waitConnection => 'Lütfen bağlantının kurulmasını bekleyin.';
 
   @override

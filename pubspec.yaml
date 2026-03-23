@@ -53,6 +53,7 @@ dependencies:
     path: packages/watch_connectivity
   plain_notification_token:
     path: packages/plain_notification_token
+  speech_to_text: ^7.0.0
   fl_lib:
     path: packages/fl_lib
 

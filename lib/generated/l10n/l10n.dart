@@ -1578,6 +1578,30 @@ abstract class AppLocalizations {
   /// **'Open current directory in SFTP.'**
   String get virtKeyHelpSFTP;
 
+  /// No description provided for @termInputBar.
+  ///
+  /// In en, this message translates to:
+  /// **'Input bar'**
+  String get termInputBar;
+
+  /// No description provided for @termInputBarHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Type text to send to terminal'**
+  String get termInputBarHint;
+
+  /// No description provided for @voiceInput.
+  ///
+  /// In en, this message translates to:
+  /// **'Voice input'**
+  String get voiceInput;
+
+  /// No description provided for @virtKeyHelpInputBar.
+  ///
+  /// In en, this message translates to:
+  /// **'Show/hide text input bar for CJK input and voice input.'**
+  String get virtKeyHelpInputBar;
+
   /// No description provided for @waitConnection.
   ///
   /// In en, this message translates to:

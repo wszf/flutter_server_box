@@ -707,13 +707,12 @@ packages:
     source: hosted
     version: "2.3.2"
   gtk:
-    dependency: "direct overridden"
+    dependency: transitive
     description:
-      path: "."
-      ref: "v0.0.36"
-      resolved-ref: c62c45857fb4f60ca3d6b5fc7fa2a26df8ba9fa7
-      url: "https://github.com/lollipopkit/gtk.dart"
-    source: git
+      name: gtk
+      sha256: e8ce9ca4b1df106e4d72dad201d345ea1a036cc12c360f1a7d5a758f78ffa42c
+      url: "https://pub.flutter-io.cn"
+    source: hosted
     version: "2.1.0"
   highlight:
     dependency: "direct main"

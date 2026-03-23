@@ -87,6 +87,8 @@ class SSHPageState extends ConsumerState<SSHPage>
   // 输入栏相关字段
   final _inputBarController = TextEditingController();
   bool _showInputBar = false;
+  /// 用户主动开启输入栏（用于备用屏幕退出后恢复）
+  bool _inputBarEnabledByUser = false;
   final _speechToText = SpeechToText();
   bool _speechEnabled = false;
   bool _isListening = false;
@@ -119,6 +121,7 @@ class SSHPageState extends ConsumerState<SSHPage>
     _inputBarController.removeListener(_onInputBarChanged);
     _inputBarDebounce?.cancel();
     _inputBarController.dispose();
+    _terminal.removeListener(_onTerminalStateChanged);
     _speechToText.cancel();
     _discontinuityTimer?.cancel();
 
@@ -143,6 +146,7 @@ class SSHPageState extends ConsumerState<SSHPage>
     _initStoredCfg();
     _initVirtKeys();
     _setupDiscontinuityTimer();
+    _terminal.addListener(_onTerminalStateChanged);
     
     // Initialize client from provider
     final serverState = ref.read(serverProvider(widget.args.spi.id));
@@ -433,15 +437,40 @@ class SSHPageState extends ConsumerState<SSHPage>
 
   /// 切换输入栏显示
   void _toggleInputBar() {
+    _inputBarEnabledByUser = !_showInputBar;
+    _setInputBarVisible(_inputBarEnabledByUser);
+  }
+
+  /// 设置输入栏可见性
+  void _setInputBarVisible(bool visible) {
+    if (_showInputBar == visible) return;
     setState(() {
-      _showInputBar = !_showInputBar;
+      _showInputBar = visible;
     });
-    if (_showInputBar) {
+    if (visible) {
       _prevInputBarText = '';
       _inputBarController.clear();
       _inputBarController.addListener(_onInputBarChanged);
     } else {
       _inputBarController.removeListener(_onInputBarChanged);
+      _inputBarDebounce?.cancel();
+    }
+  }
+
+  /// 监听终端状态变化，检测备用屏幕切换
+  /// 进入备用屏幕（vim/top等）时自动隐藏输入栏，退出时恢复
+  bool _wasAltBuffer = false;
+  void _onTerminalStateChanged() {
+    final isAlt = _terminal.isUsingAltBuffer;
+    if (isAlt == _wasAltBuffer) return;
+    _wasAltBuffer = isAlt;
+
+    if (isAlt && _showInputBar) {
+      // 进入备用屏幕，自动隐藏
+      _setInputBarVisible(false);
+    } else if (!isAlt && _inputBarEnabledByUser) {
+      // 退出备用屏幕，恢复用户之前的选择
+      _setInputBarVisible(true);
     }
   }
 

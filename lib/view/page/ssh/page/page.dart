@@ -287,6 +287,7 @@ class SSHPageState extends ConsumerState<SSHPage>
           theme: theme,
           deleteDetection: isMobile,
           autofocus: false,
+          readOnly: _showInputBar,
           keyboardAppearance: _isDark ? Brightness.dark : Brightness.light,
           showToolbar: true,
           viewOffset: Offset(2 * _horizonPadding, CustomAppBar.sysStatusBarHeight),

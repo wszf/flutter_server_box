@@ -3,7 +3,7 @@ name: Flutter Release DD
 on:
   push:
     tags:
-      - "v*"
+      - "dd-v*"
 
 permissions:
   contents: write

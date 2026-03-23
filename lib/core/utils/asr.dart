@@ -32,6 +32,9 @@ class AsrManager {
   bool _systemAvailable = false;
   AsrEngine? _activeEngine;
 
+  /// 当前活跃的引擎类型
+  AsrEngine? get activeEngine => _activeEngine;
+
   /// 检测系统语音引擎是否可用
   Future<bool> isSystemAvailable() async {
     if (_systemChecked) return _systemAvailable;

@@ -43,9 +43,14 @@ extension _InputBar on SSHPageState {
   }
 
   /// 语音按钮 - 按住说话，松开发送，上滑取消
+  /// 蓝色 = 系统引擎，绿色 = 本地模型
   Widget _buildVoiceBtn() {
     final isListening = _isListening;
     final isCancelling = _voiceCancelling;
+    final isSherpa = _asrManager.activeEngine == AsrEngine.sherpaOnnx;
+    // 系统引擎蓝色，本地模型绿色
+    final engineColor = isSherpa ? Colors.green : Colors.blue;
+
     return GestureDetector(
       onLongPressStart: (_) => _startVoiceInput(),
       onLongPressMoveUpdate: (details) {
@@ -62,7 +67,7 @@ extension _InputBar on SSHPageState {
             ? BoxDecoration(
                 color: isCancelling
                     ? Colors.red.withValues(alpha: 0.2)
-                    : Colors.blue.withValues(alpha: 0.2),
+                    : engineColor.withValues(alpha: 0.2),
                 shape: BoxShape.circle,
               )
             : null,
@@ -72,7 +77,7 @@ extension _InputBar on SSHPageState {
               : Icons.mic_none,
           size: 18,
           color: isListening
-              ? (isCancelling ? Colors.red : Colors.blue)
+              ? (isCancelling ? Colors.red : engineColor)
               : (_isDark ? Colors.white : Colors.black),
         ),
       ),

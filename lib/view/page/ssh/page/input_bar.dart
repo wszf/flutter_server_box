@@ -91,18 +91,22 @@ extension _InputBar on SSHPageState {
     );
   }
 
-  /// 提交输入：多行时逐行发送，每行后加回车
+  /// 提交输入：清除已同步内容，逐行发送
   void _onInputBarSubmit() {
     _inputBarDebounce?.cancel();
     final text = _inputBarController.text;
-    final lines = text.split('\n');
+    if (text.isEmpty) {
+      _terminal.keyInput(TerminalKey.enter);
+      return;
+    }
 
-    // 先清掉之前同步到终端的内容
+    // 先删掉已实时同步到终端的内容（含续行符）
     for (var i = 0; i < _prevInputBarText.length; i++) {
       _terminal.keyInput(TerminalKey.backspace);
     }
 
     // 逐行发送
+    final lines = text.split('\n');
     for (var i = 0; i < lines.length; i++) {
       if (lines[i].isNotEmpty) {
         _terminal.textInput(lines[i]);

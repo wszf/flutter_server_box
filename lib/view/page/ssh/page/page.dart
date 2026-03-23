@@ -500,10 +500,11 @@ class SSHPageState extends ConsumerState<SSHPage>
   }
 
   /// 将输入框内容与上次同步状态对比，批量发送差异到终端
-  /// 换行符不同步（仅在输入框内展示），提交时统一处理
+  /// 换行符同步为 shell 续行符（\ + Enter），终端显示多行但不执行
   void _syncInputBarToTerminal() {
-    // 去掉换行符再做 diff，避免换行被当作终端 Enter
-    final newText = _inputBarController.text.replaceAll('\n', '');
+    final rawText = _inputBarController.text;
+    // 将换行替换为续行标记用于 diff 比较
+    final newText = rawText.replaceAll('\n', '\\\n');
     final oldText = _prevInputBarText;
     if (newText == oldText) return;
     _prevInputBarText = newText;

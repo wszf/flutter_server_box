@@ -1596,6 +1596,24 @@ abstract class AppLocalizations {
   /// **'Voice input'**
   String get voiceInput;
 
+  /// No description provided for @voiceInputHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Hold to talk, release to send'**
+  String get voiceInputHint;
+
+  /// No description provided for @voiceInputCancel.
+  ///
+  /// In en, this message translates to:
+  /// **'Slide up to cancel'**
+  String get voiceInputCancel;
+
+  /// No description provided for @voiceInputCancelled.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancelled'**
+  String get voiceInputCancelled;
+
   /// No description provided for @virtKeyHelpInputBar.
   ///
   /// In en, this message translates to:

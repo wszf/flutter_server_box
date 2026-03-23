@@ -90,6 +90,9 @@ class SSHPageState extends ConsumerState<SSHPage>
   final _speechToText = SpeechToText();
   bool _speechEnabled = false;
   bool _isListening = false;
+  bool _voiceCancelling = false;
+  /// 记录上一次输入框的文本，用于计算增量差异
+  String _prevInputBarText = '';
 
   SSHClient? _client;
   SSHSession? _session;
@@ -111,6 +114,7 @@ class SSHPageState extends ConsumerState<SSHPage>
   void dispose() {
     _virtKeyLongPressTimer?.cancel();
     _terminalController.dispose();
+    _inputBarController.removeListener(_onInputBarChanged);
     _inputBarController.dispose();
     _speechToText.cancel();
     _discontinuityTimer?.cancel();
@@ -429,9 +433,51 @@ class SSHPageState extends ConsumerState<SSHPage>
     setState(() {
       _showInputBar = !_showInputBar;
     });
+    if (_showInputBar) {
+      _prevInputBarText = '';
+      _inputBarController.clear();
+      _inputBarController.addListener(_onInputBarChanged);
+    } else {
+      _inputBarController.removeListener(_onInputBarChanged);
+    }
   }
 
-  /// 开始语音识别
+  /// 输入框内容变化时，计算增量差异并实时同步到终端
+  void _onInputBarChanged() {
+    final newText = _inputBarController.text;
+    final oldText = _prevInputBarText;
+    _prevInputBarText = newText;
+
+    // 如果是语音识别更新的文本，不实时同步（等用户手动发送）
+    if (_isListening) return;
+
+    if (newText.length > oldText.length && newText.startsWith(oldText)) {
+      // 追加了新字符
+      final added = newText.substring(oldText.length);
+      _terminal.textInput(added);
+    } else if (newText.length < oldText.length && oldText.startsWith(newText)) {
+      // 删除了字符（退格）
+      final deletedCount = oldText.length - newText.length;
+      for (var i = 0; i < deletedCount; i++) {
+        _terminal.keyInput(TerminalKey.backspace);
+      }
+    } else if (newText != oldText) {
+      // 文本发生了非连续变化（如粘贴替换），先删旧再输新
+      for (var i = 0; i < oldText.length; i++) {
+        _terminal.keyInput(TerminalKey.backspace);
+      }
+      if (newText.isNotEmpty) {
+        _terminal.textInput(newText);
+      }
+    }
+  }
+
+  /// 更新语音取消状态
+  void _updateVoiceCancelling(bool value) {
+    setState(() => _voiceCancelling = value);
+  }
+
+  /// 开始语音识别（按住触发）
   Future<void> _startVoiceInput() async {
     if (!_speechEnabled) {
       _speechEnabled = await _speechToText.initialize(
@@ -443,7 +489,6 @@ class SSHPageState extends ConsumerState<SSHPage>
           }
         },
         onStatus: (status) {
-          // 当识别结束时自动更新状态
           if (status == 'done' || status == 'notListening') {
             if (mounted) setState(() => _isListening = false);
           }
@@ -457,6 +502,8 @@ class SSHPageState extends ConsumerState<SSHPage>
       }
     }
 
+    _voiceCancelling = false;
+
     // 获取系统语言作为识别语言
     final locale = Localizations.localeOf(context);
     final localeId = '${locale.languageCode}_${locale.countryCode ?? locale.languageCode.toUpperCase()}';
@@ -465,7 +512,6 @@ class SSHPageState extends ConsumerState<SSHPage>
       onResult: (result) {
         if (!mounted) return;
         _inputBarController.text = result.recognizedWords;
-        // 将光标移到末尾
         _inputBarController.selection = TextSelection.fromPosition(
           TextPosition(offset: _inputBarController.text.length),
         );
@@ -475,10 +521,24 @@ class SSHPageState extends ConsumerState<SSHPage>
     if (mounted) setState(() => _isListening = true);
   }
 
-  /// 停止语音识别
-  Future<void> _stopVoiceInput() async {
+  /// 结束语音识别（松开触发）
+  Future<void> _endVoiceInput() async {
     await _speechToText.stop();
-    if (mounted) setState(() => _isListening = false);
+    if (!mounted) return;
+
+    final cancelled = _voiceCancelling;
+    setState(() {
+      _isListening = false;
+      _voiceCancelling = false;
+    });
+
+    if (cancelled) {
+      // 取消输入，清空识别结果
+      _inputBarController.clear();
+      _prevInputBarText = '';
+      context.showSnackBar(l10n.voiceInputCancelled);
+    }
+    // 不取消时，识别结果保留在输入框，等用户确认后发送
   }
 
   @override

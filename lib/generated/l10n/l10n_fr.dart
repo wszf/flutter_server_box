@@ -869,6 +869,15 @@ class AppLocalizationsFr extends AppLocalizations {
   String get voiceInput => 'Voice input';
 
   @override
+  String get voiceInputHint => 'Hold to talk, release to send';
+
+  @override
+  String get voiceInputCancel => 'Slide up to cancel';
+
+  @override
+  String get voiceInputCancelled => 'Cancelled';
+
+  @override
   String get virtKeyHelpInputBar =>
       'Show/hide text input bar for CJK input and voice input.';
 

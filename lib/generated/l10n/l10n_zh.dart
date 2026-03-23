@@ -808,6 +808,15 @@ class AppLocalizationsZh extends AppLocalizations {
   String get voiceInput => '语音输入';
 
   @override
+  String get voiceInputHint => '按住说话，松开发送';
+
+  @override
+  String get voiceInputCancel => '上滑取消';
+
+  @override
+  String get voiceInputCancelled => '已取消';
+
+  @override
   String get virtKeyHelpInputBar => '显示/隐藏文本输入栏，支持中文输入和语音输入。';
 
   @override

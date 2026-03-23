@@ -1,0 +1,82 @@
+name: Flutter Release DD
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+env:
+  APP_NAME: ServerBoxDD
+  RELEASE_TAG: ${{ github.ref_name }}
+
+jobs:
+  releaseAndroid:
+    name: Release Android DD
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          submodules: recursive
+
+      - name: Install Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: "stable"
+          flutter-version: "3.41.4"
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: "zulu"
+          java-version: "17"
+
+      - name: Change package name
+        run: |
+          # 修改 applicationId 和 namespace
+          sed -i 's/tech\.lolli\.toolbox/tech.lolli.toolboxdd/g' android/app/build.gradle
+          # 修改 AndroidManifest.xml 中的包名引用
+          sed -i 's/tech\.lolli\.toolbox/tech.lolli.toolboxdd/g' android/app/src/main/AndroidManifest.xml
+          # 修改 Kotlin 方法通道名
+          sed -i 's/tech\.lolli\.toolbox/tech.lolli.toolboxdd/g' android/app/src/main/kotlin/tech/lolli/toolbox/MainActivity.kt
+
+      - name: Setup signing
+        run: |
+          echo "${{ secrets.DD_KEYSTORE_BASE64 }}" | base64 -d > android/app/release-dd.jks
+          cat > android/key.properties << EOF
+          storePassword=${{ secrets.DD_STORE_PASSWORD }}
+          keyPassword=${{ secrets.DD_KEY_PASSWORD }}
+          keyAlias=dd-release
+          storeFile=release-dd.jks
+          EOF
+
+      - name: Build
+        run: dart run fl_build -p android
+
+      - name: Rename APKs
+        shell: bash
+        run: |
+          APK_DIR="build/app/outputs/flutter-apk"
+          shopt -s nullglob
+
+          for arch in arm64 arm amd64; do
+            matches=("$APK_DIR"/"${APP_NAME}"_*_"${arch}".apk)
+            if [ ${#matches[@]} -ne 1 ]; then
+              echo "Error: expected 1 APK for ${arch}, found ${#matches[@]}"
+              ls -la "$APK_DIR" || true
+              exit 1
+            fi
+            mv "${matches[0]}" "$APK_DIR/${APP_NAME}_${RELEASE_TAG}_${arch}.apk"
+          done
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            build/app/outputs/flutter-apk/${{ env.APP_NAME }}_${{ env.RELEASE_TAG }}_arm64.apk
+            build/app/outputs/flutter-apk/${{ env.APP_NAME }}_${{ env.RELEASE_TAG }}_arm.apk
+            build/app/outputs/flutter-apk/${{ env.APP_NAME }}_${{ env.RELEASE_TAG }}_amd64.apk
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

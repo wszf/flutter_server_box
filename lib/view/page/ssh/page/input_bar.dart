@@ -11,30 +11,37 @@ extension _InputBar on SSHPageState {
     if (!_showInputBar) return const SizedBox();
     return Container(
       color: _terminalTheme.background,
-      height: _inputBarHeight,
+      constraints: const BoxConstraints(minHeight: _inputBarHeight, maxHeight: 120),
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.end,
         children: [
           Expanded(
             child: Input(
               controller: _inputBarController,
               minLines: 1,
-              maxLines: 1,
+              maxLines: 4,
               hint: l10n.termInputBarHint,
-              action: TextInputAction.send,
+              action: TextInputAction.newline,
               autoFocus: true,
               onSubmitted: (_) => _onInputBarSubmit(),
             ),
           ),
           const SizedBox(width: 4),
-          _buildVoiceBtn(),
+          Padding(
+            padding: const EdgeInsets.only(bottom: 4),
+            child: _buildVoiceBtn(),
+          ),
           const SizedBox(width: 4),
-          Btn.icon(
-            onTap: _onInputBarSubmit,
-            icon: Icon(
-              Icons.subdirectory_arrow_left,
-              size: 18,
-              color: _isDark ? Colors.white : Colors.black,
+          Padding(
+            padding: const EdgeInsets.only(bottom: 4),
+            child: Btn.icon(
+              onTap: _onInputBarSubmit,
+              icon: Icon(
+                Icons.subdirectory_arrow_left,
+                size: 18,
+                color: _isDark ? Colors.white : Colors.black,
+              ),
             ),
           ),
         ],

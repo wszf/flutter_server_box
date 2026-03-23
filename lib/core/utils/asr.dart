@@ -69,41 +69,68 @@ class AsrManager {
     return AsrStatus.needModel;
   }
 
-  /// 开始识别（自动选择引擎）
+  /// 开始识别（根据引擎偏好选择）
+  /// [enginePref] 用户偏好：auto / system / sherpaOnnx
   /// 返回 false 表示需要用户操作（下载模型等）
   Future<bool> startListening({
     required void Function(String text) onResult,
     required void Function(String error) onError,
     required void Function(String status) onStatus,
     required String localeId,
+    String enginePref = 'auto',
   }) async {
-    // 优先使用系统引擎
-    if (await isSystemAvailable()) {
-      _activeEngine = AsrEngine.system;
-      await _speechToText.listen(
-        onResult: (result) {
-          onResult(result.recognizedWords);
-        },
-        localeId: localeId,
-      );
-      return true;
+    // 用户指定使用系统引擎
+    if (enginePref == 'system') {
+      if (await isSystemAvailable()) {
+        return _startSystem(onResult, localeId);
+      }
+      onError('系统语音引擎不可用');
+      return false;
     }
 
-    // 尝试 sherpa_onnx
+    // 用户指定使用 sherpa_onnx
+    if (enginePref == 'sherpaOnnx') {
+      final model = await getReadySherpaModel();
+      if (model != null) {
+        return _startSherpa(model, onResult, onError);
+      }
+      // 没有模型，需要下载
+      return false;
+    }
+
+    // auto 模式：系统优先 → sherpa → 提示
+    if (await isSystemAvailable()) {
+      return _startSystem(onResult, localeId);
+    }
     final model = await getReadySherpaModel();
     if (model != null) {
-      _activeEngine = AsrEngine.sherpaOnnx;
-      _sherpaAsr ??= SherpaAsr();
-      await _sherpaAsr!.init(model);
-      await _sherpaAsr!.startListening(
-        onResult: onResult,
-        onError: onError,
-      );
-      return true;
+      return _startSherpa(model, onResult, onError);
     }
-
-    // 都不可用，需要用户操作
     return false;
+  }
+
+  Future<bool> _startSystem(
+    void Function(String text) onResult,
+    String localeId,
+  ) async {
+    _activeEngine = AsrEngine.system;
+    await _speechToText.listen(
+      onResult: (result) => onResult(result.recognizedWords),
+      localeId: localeId,
+    );
+    return true;
+  }
+
+  Future<bool> _startSherpa(
+    AsrModelInfo model,
+    void Function(String text) onResult,
+    void Function(String error) onError,
+  ) async {
+    _activeEngine = AsrEngine.sherpaOnnx;
+    _sherpaAsr ??= SherpaAsr();
+    await _sherpaAsr!.init(model);
+    await _sherpaAsr!.startListening(onResult: onResult, onError: onError);
+    return true;
   }
 
   /// 停止识别

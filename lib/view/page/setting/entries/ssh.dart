@@ -13,6 +13,7 @@ extension _SSH on _AppSettingsPageState {
         _buildFont(),
         _buildTermFontSize(),
         _buildSshBg(),
+        if (isMobile) _buildAsrConfig(),
         if (isDesktop) _buildDesktopTerminal(),
         _buildSSHVirtualKeyAutoOff(),
         if (isMobile) _buildSSHVirtKeys(),
@@ -548,5 +549,160 @@ extension _SSH on _AppSettingsPageState {
         actions: Btn.ok(onTap: () => onSave(_sshBlurCtrl.text)).toList,
       ),
     );
+  }
+
+  /// 语音识别配置
+  Widget _buildAsrConfig() {
+    return ExpandTile(
+      leading: const Icon(Icons.mic),
+      title: Text(l10n.voiceInput),
+      children: [_buildAsrEngine(), _buildAsrModel()],
+    );
+  }
+
+  /// ASR 引擎选择
+  Widget _buildAsrEngine() {
+    String engineStr(String val) {
+      switch (val) {
+        case 'auto':
+          return 'Auto';
+        case 'system':
+          return l10n.system;
+        case 'sherpaOnnx':
+          return 'Sherpa (${l10n.local})';
+        default:
+          return 'Auto';
+      }
+    }
+
+    return ListTile(
+      leading: const Icon(Icons.swap_horiz),
+      title: Text(l10n.engine),
+      trailing: ValBuilder(
+        listenable: _setting.asrEngine.listenable(),
+        builder: (val) => Text(engineStr(val), style: UIs.text15),
+      ),
+      onTap: () async {
+        final items = ['auto', 'system', 'sherpaOnnx'];
+        final selected = await context.showPickSingleDialog(
+          title: l10n.engine,
+          items: items,
+          display: engineStr,
+          initial: _setting.asrEngine.fetch(),
+        );
+        if (selected != null) {
+          _setting.asrEngine.put(selected);
+        }
+      },
+    );
+  }
+
+  /// ASR 模型管理
+  Widget _buildAsrModel() {
+    return ListTile(
+      leading: const Icon(Icons.download),
+      title: Text(l10n.asrSelectModel),
+      trailing: ValBuilder(
+        listenable: _setting.asrModelId.listenable(),
+        builder: (val) {
+          final model = AsrModels.byId(val);
+          return Text(
+            model?.name ?? libL10n.empty,
+            style: UIs.text15,
+          );
+        },
+      ),
+      onTap: _onTapAsrModel,
+    );
+  }
+
+  Future<void> _onTapAsrModel() async {
+    final downloadedModels = await AsrModelManager.instance.getDownloadedModels();
+    final downloadedIds = downloadedModels.map((m) => m.id).toSet();
+
+    if (!mounted) return;
+
+    await context.showRoundDialog(
+      title: l10n.asrSelectModel,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: AsrModels.all.map((model) {
+          final isDownloaded = downloadedIds.contains(model.id);
+          final isActive = _setting.asrModelId.fetch() == model.id;
+          return ListTile(
+            title: Text(model.name),
+            subtitle: Text(
+              isDownloaded
+                  ? (isActive ? '✓ ${l10n.current}' : l10n.asrModelReady)
+                  : l10n.asrModelSize(model.size),
+              style: TextStyle(
+                color: isActive ? Colors.green : null,
+              ),
+            ),
+            trailing: isDownloaded
+                ? (isActive
+                    ? const Icon(Icons.check_circle, color: Colors.green)
+                    : TextButton(
+                        onPressed: () {
+                          _setting.asrModelId.put(model.id);
+                          context.pop();
+                        },
+                        child: Text(libL10n.select),
+                      ))
+                : IconButton(
+                    icon: const Icon(Icons.download),
+                    onPressed: () {
+                      context.pop();
+                      _downloadAsrModel(model);
+                    },
+                  ),
+          );
+        }).toList(),
+      ),
+    );
+  }
+
+  Future<void> _downloadAsrModel(AsrModelInfo model) async {
+    final progressNotifier = ValueNotifier<double?>(null);
+
+    context.showRoundDialog(
+      title: l10n.asrModelDownloading,
+      child: ValueListenableBuilder<double?>(
+        valueListenable: progressNotifier,
+        builder: (_, progress, __) {
+          return Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                LinearProgressIndicator(value: progress),
+                const SizedBox(height: 8),
+                Text('${((progress ?? 0) * 100).toStringAsFixed(1)}%'),
+              ],
+            ),
+          );
+        },
+      ),
+    );
+
+    try {
+      await AsrModelManager.instance.downloadModel(
+        model,
+        onProgress: (p) => progressNotifier.value = p,
+      );
+      _setting.asrModelId.put(model.id);
+
+      if (mounted) {
+        context.pop();
+        context.showSnackBar(l10n.asrDownloadComplete);
+      }
+    } catch (e) {
+      if (mounted) {
+        context.pop();
+        context.showSnackBar('${l10n.voiceInput}: $e');
+      }
+    } finally {
+      progressNotifier.dispose();
+    }
   }
 }

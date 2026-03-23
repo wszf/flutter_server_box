@@ -882,6 +882,15 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get asrOrInstallEngine => '或安装系统语音引擎';
+
+  @override
+  String get engine => '引擎';
+
+  @override
+  String get local => '本地';
+
+  @override
+  String get current => '当前';
 }
 
 /// The translations for Chinese, as used in Taiwan (`zh_TW`).

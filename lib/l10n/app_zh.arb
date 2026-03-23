@@ -268,5 +268,8 @@
   "asrModelDelete": "删除模型",
   "asrModelSize": "大小: {size}",
   "asrDownloadComplete": "下载完成",
-  "asrOrInstallEngine": "或安装系统语音引擎"
+  "asrOrInstallEngine": "或安装系统语音引擎",
+  "engine": "引擎",
+  "local": "本地",
+  "current": "当前"
 }

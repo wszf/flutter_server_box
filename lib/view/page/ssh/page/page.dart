@@ -542,6 +542,7 @@ class SSHPageState extends ConsumerState<SSHPage>
         }
       },
       localeId: localeId,
+      enginePref: Stores.setting.asrEngine.fetch(),
     );
 
     if (!started) {

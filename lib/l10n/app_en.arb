@@ -271,5 +271,8 @@
   "asrModelDelete": "Delete model",
   "asrModelSize": "Size: {size}",
   "asrDownloadComplete": "Download complete",
-  "asrOrInstallEngine": "Or install a system voice engine"
+  "asrOrInstallEngine": "Or install a system voice engine",
+  "engine": "Engine",
+  "local": "Local",
+  "current": "Current"
 }

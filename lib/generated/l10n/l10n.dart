@@ -1739,6 +1739,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Or install a system voice engine'**
   String get asrOrInstallEngine;
+
+  /// No description provided for @engine.
+  ///
+  /// In en, this message translates to:
+  /// **'Engine'**
+  String get engine;
+
+  /// No description provided for @local.
+  ///
+  /// In en, this message translates to:
+  /// **'Local'**
+  String get local;
+
+  /// No description provided for @current.
+  ///
+  /// In en, this message translates to:
+  /// **'Current'**
+  String get current;
 }
 
 class _AppLocalizationsDelegate

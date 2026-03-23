@@ -935,4 +935,13 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get asrOrInstallEngine => 'Or install a system voice engine';
+
+  @override
+  String get engine => 'Engine';
+
+  @override
+  String get local => 'Local';
+
+  @override
+  String get current => 'Current';
 }

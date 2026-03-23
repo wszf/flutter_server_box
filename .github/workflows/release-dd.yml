@@ -52,7 +52,7 @@ jobs:
           key: pub-${{ hashFiles('pubspec.lock') }}
           restore-keys: pub-
 
-      - name: Change package name
+      - name: Change package name and app name
         run: |
           KOTLIN_SRC="android/app/src/main/kotlin"
           # 替换所有源文件中的包名
@@ -61,6 +61,9 @@ jobs:
           mkdir -p "$KOTLIN_SRC/tech/lolli/toolboxdd"
           cp -r "$KOTLIN_SRC/tech/lolli/toolbox/"* "$KOTLIN_SRC/tech/lolli/toolboxdd/"
           rm -rf "$KOTLIN_SRC/tech/lolli/toolbox"
+          # 修改 App 显示名称
+          sed -i 's/>ServerBox</>ServerBoxDD</g' android/app/src/main/res/values/strings.xml
+          sed -i 's/"appName": "ServerBox"/"appName": "ServerBoxDD"/g' fl_build.json
 
       - name: Setup signing
         run: |
